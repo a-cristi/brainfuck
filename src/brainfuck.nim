@@ -1,4 +1,5 @@
 import macros
+import streams
 
 
 {.push overflowchecks: off.}
@@ -46,9 +47,23 @@ macro CompileFile*(filename: string): stmt =
   Compile staticRead(filename.strval)
 
 
-proc Interpret*(code: string) =
-  ## Interprets the input string as brainfuck code
-  ## Reading is done from stdin, writing is done to stdout 
+proc readCharEOF(input: Stream): char =
+  ## Streams reutrn 0 as EOF, but we expect a -1
+  result = input.readChar
+  if result == '\0':
+    result = '\255'
+
+
+proc Interpret*(code: string, input, output: Stream) =
+  ## Interprets the brainfuck `code` string.
+  ## The interpreted code reads from `input` and writes to `output`
+  ##
+  ## Example:
+  ##
+  ## .. code:: nim
+  ##   var in = newStringStream("Hi there :)!\n")
+  ##   var out = newFileStream(stdout)
+  ##   Interpret(readFile("examples/rot13.b"), in, out)
   var
     tape = newSeq[char]()
     codePos = 0
@@ -71,13 +86,27 @@ proc Interpret*(code: string) =
         of '-': xdec tape[tapePos]
         of '>': inc tapePos
         of '<': dec tapePos
-        of '.': stdout.write tape[tapePos]
-        of ',': tape[tapePos] = stdin.readChar
+        of '.': output.write tape[tapePos]
+        of ',': tape[tapePos] = input.readCharEOF
         else: discard
 
       inc codePos
 
   discard run()
+
+
+proc Interpret*(code, input: string): string =
+  ## Interprets the brainfuck `code` string, reading from `input` and returning
+  ## the output it produced.
+  var outStream = newStringStream()
+  Interpret(code, input.newStringStream, outStream)
+  result = outStream.data
+
+
+proc Interpret*(code: string) =
+  ## Interprets the brainfuck `code` string, reading from stdin and writing to
+  ## stdout.
+  Interpret(code, stdin.newFileStream, stdout.newFileStream)
 
 
 when isMainModule:
