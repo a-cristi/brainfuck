@@ -3,8 +3,8 @@ import streams
 
 
 {.push overflowchecks: off.}
-proc xinc(c: var char) = inc c
-proc xdec(c: var char) = dec c
+proc xinc*(c: var char) = inc c
+proc xdec*(c: var char) = dec c
 {.pop.}
 
 
@@ -69,7 +69,7 @@ macro CompileFile*(filename: string; input, output: expr): stmt =
   result.add parseStmt($output & " = outStream.data")
 
 
-proc readCharEOF(input: Stream): char =
+proc readCharEOF*(input: Stream): char =
   ## Streams reutrn 0 as EOF, but we expect a -1
   result = input.readChar
   if result == '\0':
