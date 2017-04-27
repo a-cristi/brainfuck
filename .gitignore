@@ -1,2 +1,5 @@
 nimcache/
 bin/
+*.exe
+*.ilk
+*.pdb
