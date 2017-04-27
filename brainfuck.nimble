@@ -10,5 +10,5 @@ binDir        = "/bin"
 
 # Dependencies
 
-requires "nim >= 0.16.0"
+requires "nim >= 0.16.0", "docopt >= 0.1.0"
 
