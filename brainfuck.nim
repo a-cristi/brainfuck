@@ -78,3 +78,40 @@ proc Interpret*(code: string) =
       inc codePos
 
   discard run()
+
+
+when isMainModule:
+  import docopt, tables, strutils
+
+  let doc = """
+brainfuck
+
+Usage:
+  brainfuck mandelbrot
+  brainfuck hello
+  brainfuck rot13
+  brainfuck interpret [<file.b>]
+  brainfuck (-h | --help)
+  brainfuck (-v | --version)
+
+Options:
+  -h --help     Show this screen.
+  -v --version  Show version.
+"""
+
+  let args = docopt(doc, version = "brainfuck 1.0")
+  if args["mandelbrot"]:
+    proc mandelbrot = CompileFile("examples/mandelbrot.b")
+    mandelbrot()
+  elif args["hello"]:
+    proc hello = CompileFile("examples/helloworld.b")
+    hello()
+  elif args["rot13"]:
+    proc rot13 = CompileFile("examples/rot13.b")
+    rot13()
+  elif args["interpret"]:
+    let code = if args["<file.b>"]: readFile($args["<file.b>"])
+               else: readAll stdin
+    Interpret(code)
+  else:
+    stdout.write "ceplm"
