@@ -101,13 +101,13 @@ Options:
 
   let args = docopt(doc, version = "brainfuck 1.0")
   if args["mandelbrot"]:
-    proc mandelbrot = CompileFile("examples/mandelbrot.b")
+    proc mandelbrot = CompileFile("../examples/mandelbrot.b")
     mandelbrot()
   elif args["hello"]:
-    proc hello = CompileFile("examples/helloworld.b")
+    proc hello = CompileFile("../examples/helloworld.b")
     hello()
   elif args["rot13"]:
-    proc rot13 = CompileFile("examples/rot13.b")
+    proc rot13 = CompileFile("../examples/rot13.b")
     rot13()
   elif args["interpret"]:
     let code = if args["<file.b>"]: readFile($args["<file.b>"])

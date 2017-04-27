@@ -5,6 +5,7 @@ author        = "Cristi Anichitei"
 description   = "Brainfuck interpreter based on the How I Start Nim tutorial"
 license       = "MIT"
 
+srcDir        = "src"
 bin           = @["brainfuck"]
 binDir        = "/bin"
 
