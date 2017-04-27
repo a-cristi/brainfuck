@@ -8,7 +8,7 @@ proc xdec(c: var char) = dec c
 {.pop.}
 
 
-proc Compile(code: string): PNimrodNode {.compiletime.} =
+proc Compile(code, input, output: string): PNimrodNode {.compiletime.} =
   var statements = @[newStmtList()]
 
   template addStmt(text): stmt =
@@ -16,6 +16,13 @@ proc Compile(code: string): PNimrodNode {.compiletime.} =
 
   addStmt "var tape: array[1_000_000, char]"
   addStmt "var tapePos = 0"
+  addStmt "var inStream = " & input
+  addStmt "var outStream = " & output
+  addStmt """
+    when not compiles(newStringStream()):
+      static:
+        quit("Error: Import the streams module to compile brainfuck code", 1)
+  """
 
   for c in code:
     case c
@@ -23,8 +30,8 @@ proc Compile(code: string): PNimrodNode {.compiletime.} =
     of '-': addStmt "xdec tape[tapePos]"
     of '>': addStmt "inc tapePos"
     of '<': addStmt "dec tapePos"
-    of '.': addStmt "stdout.write tape[tapePos]"
-    of ',': addStmt "tape[tapePos] = stdin.readChar"
+    of '.': addStmt "outStream.write tape[tapePos]"
+    of ',': addStmt "tape[tapePos] = inStream.readCharEOF"
     of '[': statements.add newStmtList()
     of ']':
       var loop = newNimNode(nnkWhileStmt)
@@ -39,12 +46,27 @@ proc Compile(code: string): PNimrodNode {.compiletime.} =
 macro CompileString*(code: string): stmt =
   ## Compiles the brainfuck `code` string into Nim code that reads from stdin
   ## and writes to stdout.
-  Compile code.strval
+  Compile(code.strval, "stdin.newStringStream", "stdout.newStringStream")
+
+
+macro CompileString*(code: string; input, output: expr): stmt =
+  ## Compiles the brainfock `code` string into Nim code that reads from `input` 
+  ## and writes to `output`
+  result = Compile(code.strVal, "newStringStream(" & $input & ")", "newStringStream()")
+  result.add parseStmt($output & " = outStream.data")
+
 
 macro CompileFile*(filename: string): stmt =
-  ## Compiles the brainfuck code read from `filename` at compile time into Nim
+  ## Compiles the brainfuck code read from `filename` into Nim
   ## code that reads from stdin and writes to stdout.
-  Compile staticRead(filename.strval)
+  Compile(staticRead(filename.strval), "stdin.newFileStream", "stdout.newFileStream")
+
+
+macro CompileFile*(filename: string; input, output: expr): stmt =
+  ## Compiles the brainfock code read from `filename` into Nim
+  ## code that reads from `input` and writes to `output`
+  result = Compile(staticRead(filename.strval), "newStringStream(" & $input & ")", "newStringStream()")
+  result.add parseStmt($output & " = outStream.data")
 
 
 proc readCharEOF(input: Stream): char =
@@ -61,9 +83,9 @@ proc Interpret*(code: string, input, output: Stream) =
   ## Example:
   ##
   ## .. code:: nim
-  ##   var in = newStringStream("Hi there :)!\n")
-  ##   var out = newFileStream(stdout)
-  ##   Interpret(readFile("examples/rot13.b"), in, out)
+  ##   var inStream = newStringStream("Hi there :)!\n")
+  ##   var outStream = newFileStream(stdout)
+  ##   Interpret(readFile("examples/rot13.b"), inStream, outStream)
   var
     tape = newSeq[char]()
     codePos = 0
