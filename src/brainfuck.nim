@@ -165,4 +165,4 @@ Options:
                else: readAll stdin
     Interpret(code)
   else:
-    stdout.write "ceplm"
+    discard
